@@ -68,7 +68,7 @@ static FunnyEditor *sharedPlugin;
     NSMenuItem *menuItem = [[NSApp mainMenu] itemWithTitle:@"Edit"];
     if (menuItem) {
         [[menuItem submenu] addItem:[NSMenuItem separatorItem]];
-        NSMenuItem *actionMenuItem = [[NSMenuItem alloc] initWithTitle:@"Do Action" action:@selector(doMenuAction) keyEquivalent:@""];
+        NSMenuItem *actionMenuItem = [[NSMenuItem alloc] initWithTitle:@"Funny Edit" action:@selector(doMenuAction) keyEquivalent:@""];
         //[actionMenuItem setKeyEquivalentModifierMask:NSAlphaShiftKeyMask | NSControlKeyMask];
         [actionMenuItem setTarget:self];
         [[menuItem submenu] addItem:actionMenuItem];
@@ -81,9 +81,35 @@ static FunnyEditor *sharedPlugin;
 // Sample Action, for menu item:
 - (void)doMenuAction
 {
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:@"Hello, World"];
-    [alert runModal];
+    id tmpView = [self textView];
+    while (tmpView) {
+        [tmpView setBackgroundColor:[NSColor clearColor]];
+        if ([NSStringFromClass([tmpView class]) isEqualToString:@"DVTSourceTextScrollView"]) {
+            [tmpView setDrawsBackground:NO];
+        }
+        if ([NSStringFromClass([tmpView class]) isEqualToString:@"DVTBorderedView"]) {
+            break;
+        }
+        tmpView = [tmpView superview];
+    }
+    
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:[tmpView frame] styleMask:NSTitledWindowMask | NSBorderlessWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSClosableWindowMask backing:NSBackingStoreBuffered defer:NO];
+    [window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
+    [window setTitle:[[NSProcessInfo processInfo] processName]];
+    [window makeKeyAndOrderFront:self];
+    [window makeMainWindow];
+    window.opaque = NO;
+    window.backgroundColor = [NSColor clearColor];
+    [window.contentView addSubview:tmpView];
+}
+
+- (NSTextView *)textView
+{
+    NSWindowController *currentWindowController = [[NSApp keyWindow] windowController];
+    id editorArea = [currentWindowController performSelector:@selector(editorArea)];
+    id editorContext = [editorArea performSelector:@selector(lastActiveEditorContext)];
+    id editor = [editorContext performSelector:@selector(editor)];
+    return [editor textView];
 }
 
 @end
